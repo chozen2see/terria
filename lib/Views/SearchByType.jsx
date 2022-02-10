@@ -12,6 +12,8 @@ function SearchByType(props) {
     icon: "search"
   };
 
+  // console.log(props.viewState.terria.modelValues);
+
   return (
     <MenuPanel
       theme={dropdownTheme}
@@ -23,6 +25,7 @@ function SearchByType(props) {
     >
       <div className={classNames(PanelStyles.header)}>
         <label className={PanelStyles.heading}>Search by type</label>
+        {/* should this be a drop down with types? */}
       </div>
     </MenuPanel>
   );

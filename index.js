@@ -31,12 +31,16 @@ import defined from 'terriajs-cesium/Source/Core/defined';
 // registerCatalogMembers();
 // registerAnalytics();
 
+import APSVizCatalogSearchProvider from './lib/Models/CustomSearchProviders/APSVizCatalogSearchProvider'
+
 // we check exact match for development to reduce chances that production flag isn't set on builds(?)
 if (process.env.NODE_ENV === "development") {
     terriaOptions.analytics = new ConsoleAnalytics();
 } else {
     terriaOptions.analytics = new GoogleAnalytics();
 }
+
+console.log(process.env.NODE_ENV);
 
 // Construct the TerriaJS application, arrange to show errors to the user, and start it up.
 var terria = new Terria(terriaOptions);
@@ -47,9 +51,10 @@ registerCustomComponentTypes(terria);
 
 // Create the ViewState before terria.start so that errors have somewhere to go.
 const viewState = new ViewState({
-    terria: terria
+    terria: terria,
+    catalogSearchProvider: APSVizCatalogSearchProvider
 });
-
+//console.log("APSVizCatalogSearchProvider", viewState.catalogSearchProvider)
 registerCatalogMembers();
 
 if (process.env.NODE_ENV === "development") {
@@ -83,6 +88,9 @@ module.exports = terria.start({
             // new GazetteerSearchProviderViewModel({terria}),
             // new GnafSearchProviderViewModel({terria})
         ];
+
+        // ALM: ADD CUSTOM SEARCH PROVIDER
+        // viewState.searchState.catalogSearchProvider = APSVizCatalogSearchProvider;
 
         // Automatically update Terria (load new catalogs, etc.) when the hash part of the URL changes.
         updateApplicationOnHashChange(terria, window);

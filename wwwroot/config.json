@@ -8,6 +8,8 @@
 
     // Log ConsoleAnalytics events to console
     // logToConsole: true,
+    // created this on cesium site and added here to make the map show in the app
+    "cesiumIonAccessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkMzA5YzNmYy0wYjViLTRkNGYtYTk2MC1hNzFmOTBmYTEzYmUiLCJpZCI6NzU2NzgsImlhdCI6MTYzODgwODIzNH0.TngUYPd5hc1s-ekE9g4yiRuTcp76CnCm16NFmewjWBI",
 
     /* Text that appears at the bottom of the map */
     "disclaimer": {
@@ -366,5 +368,9 @@
     //       content: "The way the dataset appears in the preview window. We recommend true colour to search for cloud-free images"
     //   }
     // ]
+  },
+  "compilerOptions": {
+    "target": "ES5",
+    "experimentalDecorators": true
   }
 }

@@ -11,9 +11,7 @@ import SearchByType from "./SearchByType";
 import SplitPoint from "terriajs/lib/ReactViews/SplitPoint";
 import StandardUserInterface from "terriajs/lib/ReactViews/StandardUserInterface/StandardUserInterface.jsx";
 import version from "../../version";
-
 import "./global.scss";
-
 // function loadAugmentedVirtuality(callback) {
 //   require.ensure(
 //     "terriajs/lib/ReactViews/Map/Navigation/AugmentedVirtualityTool",
@@ -24,11 +22,9 @@ import "./global.scss";
 //     "AugmentedVirtuality"
 //   );
 // }
-
 // function isBrowserSupportedAV() {
 //   return /Android|iPhone|iPad/i.test(navigator.userAgent);
 // }
-
 export default function UserInterface(props) {
   return (
     <StandardUserInterface {...props} version={version}>
@@ -50,7 +46,6 @@ export default function UserInterface(props) {
     </StandardUserInterface>
   );
 }
-
 UserInterface.propTypes = {
   terria: PropTypes.object,
   viewState: PropTypes.object
