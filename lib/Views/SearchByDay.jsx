@@ -6,6 +6,8 @@ import Styles from "./related-maps.scss";
 import classNames from "classnames";
 import DatePicker from "react-datepicker";
 
+import APSVizSearchState from "../Models/CustomSearchProviders/APSVizSearchState";
+
 function SearchByDay(props) {
   const [startDate, setStartDate] = useState(new Date());
   const dropdownTheme = {
@@ -14,8 +16,7 @@ function SearchByDay(props) {
   };
 
   const { viewState } = props;
-
-  console.log("Search By Day - search state", viewState.searchState);
+  viewState.searchState = APSVizSearchState;
 
   const convertDateToString = date => {
     let dd = String(date.getDate()).padStart(2, "0");
@@ -28,13 +29,20 @@ function SearchByDay(props) {
 
   const searchByDate = () => {
     const searchBy = "date";
+    console.log("searchByDate - search state", viewState);
     viewState.searchState.searchCatalog(searchBy);
   };
 
   const onDateChanged = date => {
     setStartDate(date);
-    console.log("date", convertDateToString(date));
+    // console.log("date", convertDateToString(date));
+
     viewState.changeSearchState(convertDateToString(date));
+    console.log(
+      "onDateChanged catalogSearchText: ",
+      viewState.searchState.catalogSearchText
+    );
+
     searchByDate();
     viewState.setTopElement("AddData");
     viewState.openAddData();

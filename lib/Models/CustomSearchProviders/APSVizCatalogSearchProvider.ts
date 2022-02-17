@@ -1,30 +1,29 @@
-import { autorun, computed, observable, runInAction } from "mobx";
+import { action, autorun, computed, observable, runInAction } from "mobx";
+import { fromPromise } from "mobx-utils";
+
+import Terria from "terriajs/lib/Models/Terria";
+import { TerriaErrorSeverity } from "terriajs/lib/Core/TerriaError";
+
+import { BaseModel } from "terriajs/lib/Models/Definition/Model";
+import GroupMixin from "terriajs/lib/ModelMixins/GroupMixin";
+import ReferenceMixin from "terriajs/lib/ModelMixins/ReferenceMixin";
+
+import CatalogSearchProvider from "terriajs/lib/Models/SearchProviders/CatalogSearchProvider";
+import SearchProviderResults from "terriajs/lib/Models/SearchProviders/SearchProviderResults";
+import SearchResult from "terriajs/lib/Models/SearchProviders/SearchResult";
+
 import {
   Category,
   SearchAction
 } from "terriajs/lib/Core/AnalyticEvents/analyticEvents";
-import isDefined from "terriajs/lib/Core/isDefined";
-import { TerriaErrorSeverity } from "terriajs/lib/Core/TerriaError";
-import GroupMixin from "terriajs/lib/ModelMixins/GroupMixin";
-import ReferenceMixin from "terriajs/lib/ModelMixins/ReferenceMixin";
-import { BaseModel } from "terriajs/lib/Models/Definition/Model";
-import Terria from "terriajs/lib/Models/Terria";
 
-// create local version of this file
-import SearchProvider from "terriajs/lib/Models/SearchProviders/SearchProvider";
-
-import SearchProviderResults from "terriajs/lib/Models/SearchProviders/SearchProviderResults";
-
-import SearchResult from "terriajs/lib/Models/SearchProviders/SearchResult";
-
-interface CatalogSearchProviderOptions {
+interface APSVizCatalogSearchProviderOptions {
   terria: Terria;
 }
 
-// import saveModelToJson from "../Definition/saveModelToJson"
-
 type UniqueIdString = string;
 type ResultMap = Map<UniqueIdString, boolean>;
+
 export function loadAndSearchCatalogRecursively(
   models: BaseModel[],
   searchTextLowercase: string,
@@ -53,7 +52,6 @@ export function loadAndSearchCatalogRecursively(
 
       // const modelToSaveJson = saveModelToJson(modelToSave);
       autorun(reaction => {
-        // const searchString = `${modelToSave.name} ${modelToSave.uniqueId} ${modelToSave.description}`;
         let searchString = "";
 
         switch (searchBy) {
@@ -71,11 +69,11 @@ export function loadAndSearchCatalogRecursively(
           }
         }
 
-        console.log("CUSTOM SEARCH:", searchString);
-
         const matchesString =
           searchString.toLowerCase().indexOf(searchTextLowercase) !== -1;
+
         resultMap.set(model.uniqueId, matchesString);
+
         if (matchesString) {
           runInAction(() => {
             searchResults.results.push(
@@ -103,6 +101,7 @@ export function loadAndSearchCatalogRecursively(
   if (referencesAndGroupsToLoad.length === 0) {
     return Promise.resolve();
   }
+
   return new Promise(resolve => {
     autorun(reaction => {
       Promise.all(
@@ -124,7 +123,8 @@ export function loadAndSearchCatalogRecursively(
             searchTextLowercase,
             searchResults,
             resultMap,
-            iteration + 1
+            iteration + 1,
+            searchBy
           )
         );
       });
@@ -133,21 +133,28 @@ export function loadAndSearchCatalogRecursively(
   });
 }
 
-export default class APSVizCatalogSearchProvider extends SearchProvider {
-  readonly terria: Terria;
-  @observable isSearching: boolean = false;
-  @observable debounceDurationOnceLoaded: number = 300;
-
-  constructor(options: CatalogSearchProviderOptions) {
-    super();
-
-    this.terria = options.terria;
-    this.name = "APSViz Catalog Items";
-    console.log("APSVizCatalogSearchProvider Constructor");
+export default class APSVizCatalogSearchProvider extends CatalogSearchProvider {
+  constructor(options: APSVizCatalogSearchProviderOptions) {
+    super(options);
+    super.name = "APS Viz Catalog Items";
   }
 
-  @computed get resultsAreReferences() {
-    return isDefined(this.terria.catalogIndex);
+  @action
+  search(searchText: string, searchBy?: string): SearchProviderResults {
+    const result = new SearchProviderResults(this);
+    result.resultsCompletePromise = fromPromise(
+      this.doSearch(searchText, result, searchBy)
+    );
+    return result;
+  }
+
+  @action
+  setIsSearching(status: boolean) {
+    super.isSearching = status;
+  }
+
+  @computed get isSearching() {
+    return super.isSearching;
   }
 
   protected async doSearch(
@@ -155,26 +162,30 @@ export default class APSVizCatalogSearchProvider extends SearchProvider {
     searchResults: SearchProviderResults,
     searchBy?: string
   ): Promise<void> {
-    this.isSearching = true;
+    console.log("APSViz Do Search");
+
+    this.setIsSearching(true);
     searchResults.results.length = 0;
     searchResults.message = undefined;
 
     if (searchText === undefined || /^\s*$/.test(searchText)) {
-      this.isSearching = false;
+      this.setIsSearching(false);
       return Promise.resolve();
     }
 
-    this.terria.analytics?.logEvent(
+    super.terria.analytics?.logEvent(
       Category.search,
       SearchAction.catalog,
-      searchText
+      searchText,
+      searchBy
     );
+
     const resultMap: ResultMap = new Map();
 
     try {
-      if (this.terria.catalogIndex) {
+      if (super.terria.catalogIndex) {
         console.log("APSVizCatalogSearchProvider: terria catalogIndex exists");
-        const results = await this.terria.catalogIndex?.search(searchText);
+        const results = await super.terria.catalogIndex?.search(searchText);
         runInAction(() => (searchResults.results = results));
       } else {
         console.log(
@@ -182,7 +193,7 @@ export default class APSVizCatalogSearchProvider extends SearchProvider {
         );
         let defaultIteration = 0;
         await loadAndSearchCatalogRecursively(
-          this.terria.modelValues,
+          super.terria.modelValues,
           searchText.toLowerCase(),
           searchResults,
           resultMap,
@@ -192,7 +203,7 @@ export default class APSVizCatalogSearchProvider extends SearchProvider {
       }
 
       runInAction(() => {
-        this.isSearching = false;
+        this.setIsSearching(false);
       });
 
       if (searchResults.isCanceled) {
@@ -201,14 +212,14 @@ export default class APSVizCatalogSearchProvider extends SearchProvider {
       }
 
       runInAction(() => {
-        this.terria.catalogReferencesLoaded = true;
+        super.terria.catalogReferencesLoaded = true;
       });
 
       if (searchResults.results.length === 0) {
         searchResults.message = "Sorry, no locations match your search query.";
       }
     } catch (e) {
-      this.terria.raiseErrorToUser(e, {
+      super.terria.raiseErrorToUser(e, {
         message: "An error occurred while searching",
         severity: TerriaErrorSeverity.Warning
       });

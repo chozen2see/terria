@@ -31,7 +31,8 @@ import defined from 'terriajs-cesium/Source/Core/defined';
 // registerCatalogMembers();
 // registerAnalytics();
 
-import APSVizCatalogSearchProvider from './lib/Models/CustomSearchProviders/APSVizCatalogSearchProvider'
+import APSVizCatalogSearchProvider from './lib/Models/CustomSearchProviders/APSVizCatalogSearchProvider';
+// import APSVizSearchState from "./lib/Models/CustomSearchProviders/APSVizSearchState";
 
 // we check exact match for development to reduce chances that production flag isn't set on builds(?)
 if (process.env.NODE_ENV === "development") {
@@ -54,8 +55,8 @@ const viewState = new ViewState({
     terria: terria,
     catalogSearchProvider: APSVizCatalogSearchProvider
 });
-//console.log("APSVizCatalogSearchProvider", viewState.catalogSearchProvider)
 registerCatalogMembers();
+console.log("APSVizCatalogSearchProvider", viewState.catalogSearchProvider)
 
 if (process.env.NODE_ENV === "development") {
     window.viewState = viewState;
@@ -80,6 +81,9 @@ module.exports = terria.start({
 }).finally(function() {
     terria.loadInitSources().then(result => result.raiseError(terria));
     try {
+        // ALM: ADD CUSTOM SEARCH STATE
+        // viewState.searchState = APSVizSearchState;
+
         viewState.searchState.locationSearchProviders = [
             new BingMapsSearchProviderViewModel({
                 terria: terria,
@@ -89,8 +93,6 @@ module.exports = terria.start({
             // new GnafSearchProviderViewModel({terria})
         ];
 
-        // ALM: ADD CUSTOM SEARCH PROVIDER
-        // viewState.searchState.catalogSearchProvider = APSVizCatalogSearchProvider;
 
         // Automatically update Terria (load new catalogs, etc.) when the hash part of the URL changes.
         updateApplicationOnHashChange(terria, window);
